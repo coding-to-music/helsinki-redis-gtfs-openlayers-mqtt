@@ -1,10 +1,38 @@
+# helsinki-redis-gtfs-openlayers-mqtt
+
+# 🚀 Helsinki Transit System - Real-Time Vehicle Tracking with Redis 🚀
+
+https://github.com/coding-to-music/helsinki-redis-gtfs-openlayers-mqtt
+
+From / By https://github.com/redis-developer/expert-garbanzo
+
+https://github.com/DMW2151/expert-garbanzo
+
+https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/
+
+## Environment variables:
+
+```java
+
+```
+
+## GitHub
+
+```java
+git init
+git add .
+git remote remove origin
+git commit -m "first commit"
+git branch -M main
+git remote add origin git@github.com:coding-to-music/helsinki-redis-gtfs-openlayers-mqtt.git
+git push -u origin main
+```
+
 # Helsinki Transit System - Real-Time Vehicle Tracking with Redis
 
 This project publishes realtime locations of municipal transport vehicles in the Helsinki metro area to a web UI. Although Helsinki offers a great [realtime API](https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/) for developers, there is no such site that makes this data generally available to the public.<sup>1</sup>
 
 This is an awesome service that Helsinki provides. Given that HSL publishes on the order of ~50 million updates per day, I felt that Redis would be a great tool to use given the robustness of the TimeSeries Module to quickly aggregate tens of thousands of datapoints, and the Redis Gears module's ability to run batch jobs off the main thread.
-
-
 
 ![Screenshot of Live Map - Downtown Helsinki](https://raw.githubusercontent.com/DMW2151/expert-garbanzo/master/docs/live_.png "live")
 
@@ -18,7 +46,7 @@ UI with the **current traffic** layer enabled - an hourly summary is aggregated 
 
 UI with the **trip history** layer and tooltip showing details of vehicle's current status. Coloring maps to vehicle's contemporaneous speed.
 
--------
+---
 
 - [Helsinki Transit System - Real-Time Vehicle Tracking with Redis](#Helsinki-Transit-System---Real-Time-Vehicle-Tracking-with-Redis)
   - [Summary](#Summary)
@@ -37,8 +65,8 @@ UI with the **trip history** layer and tooltip showing details of vehicle's curr
   - [Technical Appendix](#Technical-Appendix)
     - [Data Throughput](#Data-Throughput)
     - [Memory, CPU, and Disk Usage](#Memory-CPU-and-Disk-Usage)
-  
-_______
+
+---
 
 ## Summary
 
@@ -89,7 +117,7 @@ Once in Redis, the data is fanned out to a stream, a pub/sub channel, and multip
 
 The remainder of this document will go through the application in a bit more detail, including local deployment of the application, Redis commands used in each stage & system traffic and architecture.
 
---------
+---
 
 ## Local Build - Startup Notes
 
@@ -106,12 +134,13 @@ docker exec <name of redis container> \ # (e.g. redis_hackathon_redis_1)
     bash -c "gears-cli run /redis/stream_writebehind.py --requirements /redis/requirements.txt"
 ```
 
-------
+---
+
 ## Deployement Notes
 
 The whole system `docker-compose` setup is currently running without security and traffic is routed via ports. If you want to deploy to a cloud instance and secure the installation, then the most easy way would be to add a reverse proxy (e.g. nginx) to the `docker-compose` setup to route via URL pathes and modify the hard-coded ports in `./frontend/index.js` to mach your pathes. If you want to add SSL, then the protocols need to be changed from `HTTP/WS` to `HTTPS/WSS` as well.
 
-------
+---
 
 ## System Architecture
 
@@ -176,17 +205,16 @@ pipe.XAdd(
 
 #### Writing Data to TimeSeries
 
-The incoming event is pushed to several time series. A unique identifier is created for each "trip" (referred to as **JourneyHash**) hashing certain attributes from the event. The broker creates a time series for both speed and location for each journeyhash. 
+The incoming event is pushed to several time series. A unique identifier is created for each "trip" (referred to as **JourneyHash**) hashing certain attributes from the event. The broker creates a time series for both speed and location for each journeyhash.
 
 - Location data is stored in a time series by encoding a (lat, lng) position to an integer representation (much like Redis does internally for `GEO.XXX` commands).
-  
 - Speed data is simply stored as m/s, as it appears in the original MQTT message.
 
 The position and speed series have a short retention and are compacted to secondary time series. These compacted series have a much longer retention time (~2hr) and are used by the API to show users the **trip history** layer. By quickly expiring/aggregating individual events, this pattern allows us to keep memory usage much lower.
 
 ##### Commands
 
-As with previous sections, the commands are executed by Golang. As the standard Golang client does not include the `TS.XXX` commands, I will forgo showing the Go written for this section. 
+As with previous sections, the commands are executed by Golang. As the standard Golang client does not include the `TS.XXX` commands, I will forgo showing the Go written for this section.
 
 First, I check to see if a journeyhash has not yet been seen by checking it's inclusion in a set (`journeyID`). If the following returns `1`, I proceed with creating series and rules, else, I just `TS.ADD` the data.
 
@@ -234,7 +262,7 @@ The RedisGears function is written in Python and doesn't call any Redis commands
 
 ### Tile Generation Pipeline (PostGIS)
 
-The `PostGIS` and `Tilegen` containers are crucial in serving **GTFS** and  **current traffic** layers.
+The `PostGIS` and `Tilegen` containers are crucial in serving **GTFS** and **current traffic** layers.
 
 PostGIS is a PostgreSQL extension that enables geospatial operations.
 
@@ -243,14 +271,13 @@ TileGen is an alpine container that contains two common utilities used in geospa
 1. [Sourcing static data](tilegen/tippecanoe/get_static_data.sh) and pushing it to PostGIS with [GDAL](https://gdal.org/)
 2. Periodic [regeneration of tiles](/tilegen/tippecanoe/tilegen.sh) using [Tippecanoe](https://github.com/mapbox/tippecanoe)
 
-The TilesAPI is a  simple Golang API which is used to fetch those tiles from disk and send them to the frontend.
+The TilesAPI is a simple Golang API which is used to fetch those tiles from disk and send them to the frontend.
 
 ### Accessing Data with the Locations API
 
 The Locations API has two endpoints `/locations/` and `/histlocations/`.
 
 - `/locations/` subscribes to the Redis PUB/SUB channel described earlier. When a client connects to this endpoint, the connection is upgraded and events are pushed along to the client in real-time.
-  
 - `/histlocations/` queries a specific trip timeseries in Redis using `TS.MRANGE`; the API takes the "merged" result and creates a response of historical positions and speeds for a given trip.
 
 #### Commands
@@ -273,7 +300,7 @@ The frontend uses [OpenLayers](https://openlayers.org/), a JS library, to create
 
 The frontend also makes calls to a publicly available [API](https://carto.com/help/building-maps/basemap-list/) for basemap imagery.
 
-------
+---
 
 ## Technical Appendix
 
@@ -308,17 +335,16 @@ In local testing, I found the most stressed part of the system wasn't CPU as I h
 
 ```bash
 CONTAINER ID   NAME                     CPU %     MEM USAGE / LIMIT     MEM %     NET I/O
-6d0a1d7fab0d   redis_hackathon_mqtt_1   24.02%    10.71MiB / 3.786GiB   0.28%     32GB / 60.4GB  
+6d0a1d7fab0d   redis_hackathon_mqtt_1   24.02%    10.71MiB / 3.786GiB   0.28%     32GB / 60.4GB
 833aab4d39a8   redis_hackathon_redis_1  7.02%     862.7MiB / 3.786GiB   22.26%    58.8GB / 38.9GB
 ```
-
 
 Upgrading from AWS standard `gp2` EBS to `gp3` EBS allowed me to get 3000 IOPs and 125MB/s throughput essentially for free and made hosting the PostgreSQL instance in a container viable. Without a robust disk, the site still functioned, however tile generation was quite slow and could lag 10+ minutes. As I'd like to expand this component to allow for 30m, 1h, 2h, 6h traffic layers, being able to get historical positions from disk quickly was crucial.
 
 Prior to upgrade, system load was very high due to the write-behind from gears (writing to disk) and tile generation (from disk). With the update, even during rush-hour (decoding/encoding messages -> CPU Heavy) and tile regeneration (Both Disk & CPU heavy), `%iowait` stays low and system load stays < 1. Consider the following results from `sar` during a tile regeneration event
 
 ```bash
-                CPU     %user   %system   %iowait   %idle  
+                CPU     %user   %system   %iowait   %idle
 20:00:07        all      9.98      9.88     47.08   32.56
 # PostgreSQL Aggregations - Disk Heavy --
 20:00:22        all     10.22     12.04     41.70   35.22
@@ -334,4 +360,4 @@ Prior to upgrade, system load was very high due to the write-behind from gears (
 
 Due to the time series policy which sets TTL on entries for 1m in series A / 2h in series B and the Gears function constantly clearing the event stream, the Redis memory usage stays fairly constant around 800-900MB.
 
-------
+---
