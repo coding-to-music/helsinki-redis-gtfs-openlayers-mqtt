@@ -127,6 +127,21 @@ A functional version of the system can be spun up locally with `docker-compose`.
 docker-compose up --build
 ```
 
+### Cleanup space used
+
+```
+cat ~/.bash_aliases | grep prune
+```
+
+```
+alias dip="docker image prune -f"
+alias dcp="docker container prune -f"
+alias dnp="docker network prune -f"
+alias dvp="docker volume prune -f"
+```
+
+## Updates to traffic speeds / neighborhood layer
+
 The following command can be run if you're interested in receiving periodic updates to the traffic speeds/neighborhoods layer. This is not strictly necessary as it can take several hours to gather sufficient data to get a reasonable amount of data (and you'd still need to wait to the `tilegen` job to come around to repopulate layers).
 
 ```bash
