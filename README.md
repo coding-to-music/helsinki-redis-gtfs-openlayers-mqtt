@@ -140,6 +140,57 @@ alias dnp="docker network prune -f"
 alias dvp="docker volume prune -f"
 ```
 
+## messages and stopping
+
+```
+redis_1          | 38:C 11 Oct 2022 04:59:38.259 * DB saved on disk
+redis_1          | 38:C 11 Oct 2022 04:59:38.271 * RDB: 11 MB of memory used by copy-on-write
+redis_1          | 1:M 11 Oct 2022 04:59:38.344 * Background saving terminated with success
+redis_1          | 1:M 11 Oct 2022 05:00:39.074 * 10000 changes in 60 seconds. Saving...
+redis_1          | 1:M 11 Oct 2022 05:00:39.082 * Background saving started by pid 39
+redis_1          | 39:C 11 Oct 2022 05:00:40.833 * DB saved on disk
+redis_1          | 39:C 11 Oct 2022 05:00:40.841 * RDB: 11 MB of memory used by copy-on-write
+redis_1          | 1:M 11 Oct 2022 05:00:40.900 * Background saving terminated with success
+redis_1          | 1:M 11 Oct 2022 05:01:41.013 * 10000 changes in 60 seconds. Saving...
+redis_1          | 1:M 11 Oct 2022 05:01:41.020 * Background saving started by pid 40
+redis_1          | 40:C 11 Oct 2022 05:01:42.382 * DB saved on disk
+redis_1          | 40:C 11 Oct 2022 05:01:42.390 * RDB: 11 MB of memory used by copy-on-write
+redis_1          | 1:M 11 Oct 2022 05:01:42.434 * Background saving terminated with success
+redis_1          | 1:M 11 Oct 2022 05:02:43.038 * 10000 changes in 60 seconds. Saving...
+redis_1          | 1:M 11 Oct 2022 05:02:43.046 * Background saving started by pid 41
+redis_1          | 41:C 11 Oct 2022 05:02:44.853 * DB saved on disk
+redis_1          | 41:C 11 Oct 2022 05:02:44.861 * RDB: 11 MB of memory used by copy-on-write
+redis_1          | 1:M 11 Oct 2022 05:02:44.870 * Background saving terminated with success
+```
+
+## Stopping
+
+```
+^CGracefully stopping... (press Ctrl+C again to force)
+Stopping helsinki-redis-gtfs-openlayers-mqtt_frontend_1      ... done
+Stopping helsinki-redis-gtfs-openlayers-mqtt_mqtt_1          ... done
+Stopping helsinki-redis-gtfs-openlayers-mqtt_locations_api_1 ... done
+Stopping helsinki-redis-gtfs-openlayers-mqtt_tilegen_1       ... done
+Stopping helsinki-redis-gtfs-openlayers-mqtt_redis_1         ... done
+```
+
+```
+docker-compose down
+```
+
+Output
+
+```
+Removing helsinki-redis-gtfs-openlayers-mqtt_frontend_1      ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_mqtt_1          ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_locations_api_1 ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_tilegen_1       ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_redis_1         ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_postgis_1       ... done
+Removing helsinki-redis-gtfs-openlayers-mqtt_tiles_api_1     ... done
+Removing network helsinki-redis-gtfs-openlayers-mqtt_default
+```
+
 ## Updates to traffic speeds / neighborhood layer
 
 The following command can be run if you're interested in receiving periodic updates to the traffic speeds/neighborhoods layer. This is not strictly necessary as it can take several hours to gather sufficient data to get a reasonable amount of data (and you'd still need to wait to the `tilegen` job to come around to repopulate layers).
